@@ -1,0 +1,40 @@
+schema_version = "1.1"
+
+[task]
+name = "codimango/village-profile-location-finite"
+description = "Village AAI Labs - profile location validators missing finite check NaN Infinity"
+authors = [{ name = "Village Author", email = "author@village.example.com" }]
+keywords = ["village", "profile", "location", "validation", "finite", "NaN", "Infinity", "harvester-v1"]
+format = "swe_bench_single_turn"
+workstream = "swe_public_repo"
+
+[metadata]
+tags = ["village", "aai-labs", "profile", "location", "validation", "finite", "hardened", "human-reviewed"]
+category_usecase = "boundary_condition"
+category_subdomain = "validation"
+reward_type = "binary"
+difficulty_hypothesis = "easy"
+novelty_risk = "low"
+base_commit = "c51d1268118d1d5673fb274d8b648fbcd1ce8678"
+source_author = "village_author"
+
+[verifier]
+timeout_sec = 600.0
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+gpus = 0
+allow_internet = true
+mcp_servers = []
+
+[verifier.env]
+
+[environment.env]
+
+[solution.env]

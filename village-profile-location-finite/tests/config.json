@@ -1,0 +1,39 @@
+{
+  "repo": "metainternal-aai/aai-labs-village",
+  "instance_id": "aai_metainternal-aai__aai-labs-village-c51d1268118d1d5673fb274d8b648fbcd1ce8678-village-profile-location-finite",
+  "base_commit": "c51d1268118d1d5673fb274d8b648fbcd1ce8678",
+  "patch": "diff --git a/server/src/modules/users/users.validators.ts b/server/src/modules/users/users.validators.ts\nindex 98205ef..5e7d124 100644\n--- a/server/src/modules/users/users.validators.ts\n+++ b/server/src/modules/users/users.validators.ts\n@@ -155,9 +155,9 @@ function validateAvatarUrl(url?: string): string | undefined {\n function validateLatLng(lat?: number, lng?: number): { lat?: number; lng?: number } {\n   if (lat === undefined && lng === undefined) return {};\n   if (lat === undefined || lng === undefined) validated(\"both location_lat and location_lng required\");\n-  if (typeof lat !== \"number\" || typeof lng !== \"number\") validated(\"location must be numbers\");\n-  if (Math.abs(lat) > 90) validated(\"invalid latitude\");\n-  if (Math.abs(lng) > 180) validated(\"invalid longitude\");\n+  if (typeof lat !== \"number\" || typeof lng !== \"number\" || !Number.isFinite(lat) || !Number.isFinite(lng)) validated(\"location must be numbers\");\n+  if (!Number.isFinite(lat) || Math.abs(lat) > 90) validated(\"invalid latitude\");\n+  if (!Number.isFinite(lng) || Math.abs(lng) > 180) validated(\"invalid longitude\");\n   return { lat, lng };\n }\n \n",
+  "test_patch": "diff --git a/server/src/modules/users/users.location-finite.test.ts b/server/src/modules/users/users.location-finite.test.ts\nnew file mode 100644\nindex 0000000000000000000000000000000000000000..1111111111111111111111111111111111111111\n--- /dev/null\n+++ b/server/src/modules/users/users.location-finite.test.ts\n@@ -0,0 +1,66 @@\n+import { describe, it } from \"node:test\";\n+import assert from \"node:assert/strict\";\n+import { validateUpdateInput } from \"./users.validators.ts\";\n+\n+describe(\"validateLatLng finite check - FAIL_TO_PASS\", () => {\n+  it(\"rejects NaN latitude\", () => {\n+    assert.throws(\n+      () => validateUpdateInput({ locationLat: NaN, locationLng: -122.4194 } as any),\n+      /must be numbers|invalid/\n+    );\n+  });\n+  it(\"rejects NaN longitude\", () => {\n+    assert.throws(\n+      () => validateUpdateInput({ locationLat: 37.7749, locationLng: NaN } as any),\n+      /must be numbers|invalid/\n+    );\n+  });\n+  it(\"rejects NaN both lat lng\", () => {\n+    assert.throws(\n+      () => validateUpdateInput({ locationLat: NaN, locationLng: NaN } as any),\n+      /must be numbers|invalid/\n+    );\n+  });\n+  it(\"rejects Infinity latitude with must be numbers\", () => {\n+    assert.throws(\n+      () => validateUpdateInput({ locationLat: Infinity, locationLng: -122 } as any),\n+      /must be numbers/\n+    );\n+  });\n+  it(\"rejects -Infinity longitude with must be numbers\", () => {\n+    assert.throws(\n+      () => validateUpdateInput({ locationLat: 37.7, locationLng: -Infinity } as any),\n+      /must be numbers/\n+    );\n+  });\n+});\n+\n+describe(\"validateLatLng finite check - PASS_TO_PASS\", () => {\n+  it(\"accepts valid finite lat/lng\", () => {\n+    const out = validateUpdateInput({ locationLat: 37.7749, locationLng: -122.4194 } as any);\n+    assert.equal(out.locationLat, 37.7749);\n+    assert.equal(out.locationLng, -122.4194);\n+  });\n+  it(\"missing both returns empty\", () => {\n+    const out = validateUpdateInput({} as any);\n+    assert.equal(out.locationLat, undefined);\n+  });\n+  it(\"missing one throws both required\", () => {\n+    assert.throws(\n+      () => validateUpdateInput({ locationLat: 37.7 } as any),\n+      /both location_lat and location_lng required/\n+    );\n+  });\n+  it(\"out-of-range latitude throws invalid latitude\", () => {\n+    assert.throws(\n+      () => validateUpdateInput({ locationLat: 91, locationLng: -122 } as any),\n+      /invalid latitude/\n+    );\n+  });\n+  it(\"out-of-range longitude throws invalid longitude\", () => {\n+    assert.throws(\n+      () => validateUpdateInput({ locationLat: 37.7, locationLng: 181 } as any),\n+      /invalid longitude/\n+    );\n+  });\n+});\n",
+  "fail_to_pass": [
+    "validateLatLng finite check - FAIL_TO_PASS > rejects NaN latitude",
+    "validateLatLng finite check - FAIL_TO_PASS > rejects NaN longitude",
+    "validateLatLng finite check - FAIL_TO_PASS > rejects NaN both lat lng",
+    "validateLatLng finite check - FAIL_TO_PASS > rejects Infinity latitude with must be numbers",
+    "validateLatLng finite check - FAIL_TO_PASS > rejects -Infinity longitude with must be numbers"
+  ],
+  "pass_to_pass": [
+    "validateLatLng finite check - PASS_TO_PASS > accepts valid finite lat/lng",
+    "validateLatLng finite check - PASS_TO_PASS > missing both returns empty",
+    "validateLatLng finite check - PASS_TO_PASS > missing one throws both required",
+    "validateLatLng finite check - PASS_TO_PASS > out-of-range latitude throws invalid latitude",
+    "validateLatLng finite check - PASS_TO_PASS > out-of-range longitude throws invalid longitude"
+  ],
+  "FAIL_TO_PASS": [
+    "validateLatLng finite check - FAIL_TO_PASS > rejects NaN latitude",
+    "validateLatLng finite check - FAIL_TO_PASS > rejects NaN longitude",
+    "validateLatLng finite check - FAIL_TO_PASS > rejects NaN both lat lng",
+    "validateLatLng finite check - FAIL_TO_PASS > rejects Infinity latitude with must be numbers",
+    "validateLatLng finite check - FAIL_TO_PASS > rejects -Infinity longitude with must be numbers"
+  ],
+  "PASS_TO_PASS": [
+    "validateLatLng finite check - PASS_TO_PASS > accepts valid finite lat/lng",
+    "validateLatLng finite check - PASS_TO_PASS > missing both returns empty",
+    "validateLatLng finite check - PASS_TO_PASS > missing one throws both required",
+    "validateLatLng finite check - PASS_TO_PASS > out-of-range latitude throws invalid latitude",
+    "validateLatLng finite check - PASS_TO_PASS > out-of-range longitude throws invalid longitude"
+  ],
+  "selected_test_files_to_run": [
+    "server/src/modules/users/users.location-finite.test.ts"
+  ],
+  "before_repo_set_cmd": ""
+}

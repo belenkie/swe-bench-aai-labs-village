@@ -1,0 +1,17 @@
+diff --git a/server/src/modules/users/users.validators.ts b/server/src/modules/users/users.validators.ts
+index 98205ef..5e7d124 100644
+--- a/server/src/modules/users/users.validators.ts
++++ b/server/src/modules/users/users.validators.ts
+@@ -155,9 +155,9 @@ function validateAvatarUrl(url?: string): string | undefined {
+ function validateLatLng(lat?: number, lng?: number): { lat?: number; lng?: number } {
+   if (lat === undefined && lng === undefined) return {};
+   if (lat === undefined || lng === undefined) validated("both location_lat and location_lng required");
+-  if (typeof lat !== "number" || typeof lng !== "number") validated("location must be numbers");
+-  if (Math.abs(lat) > 90) validated("invalid latitude");
+-  if (Math.abs(lng) > 180) validated("invalid longitude");
++  if (typeof lat !== "number" || typeof lng !== "number" || !Number.isFinite(lat) || !Number.isFinite(lng)) validated("location must be numbers");
++  if (!Number.isFinite(lat) || Math.abs(lat) > 90) validated("invalid latitude");
++  if (!Number.isFinite(lng) || Math.abs(lng) > 180) validated("invalid longitude");
+   return { lat, lng };
+ }
+ 
