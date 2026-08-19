@@ -1,0 +1,40 @@
+schema_version = "1.1"
+
+[task]
+name = "codimango/aai-labs-village-bw253069"
+description = "# village-validate-endtime\n\n## Context\nVillage Expo SDK57+ Fastify — Village is a community event discovery app (SF Bay). Source at `/app` in container. Node 20, `npm ci --ignore-scripts`, `tsx@4.23.1` global. Tests via `npx tsx --test`.\n\n## Bug description\n\n## Bug description\n- `validateCreateEventInput` in `server/src/modules/events/events.routes.ts` validates that `endTime` (if present) is a valid ISO string, but does NOT verify it is after `time`. Client-side `buildCreateEventInput` has check `if (endTime <= time) error`, but server bypass allows creation of negative/zero duration events via direct API call.\n- Creates events where endTime before start, breaking UI duration display and sorting.\n\n## Required fix outcome\n- In server validator, after parsing rawEndTime and rawTime, if both are valid ISO, ensure Date.parse(endTime) > Date.parse(time). Return `{ ok:false, message:\"endTime must be after time\" }` otherwise.\n- Keep existing validations: missing time reject, invalid ISO reject, privileged fields stripped.\n- Only 1 file change: `server/src/modules/events/events.routes.ts`\n\n## Verifiable FAIL_TO_PASS flips\n- rejects endTime before start -> 400 validation_error containing \"after time\"\n- rejects equal endTime -> 400\n- accepts valid endTime after start -> 200/ok\n- accepts missing endTime -> ok (optional field)\n\n## Files to inspect\n- server/src/modules/events/events.routes.ts (validateCreateEventInput)\n- src/lib/create-event.ts (client-side mirror, already has guard)\n\n\n## Affected files\n- server/src/modules/events/events.create.test.ts\n- (plus related libs)\n\n## Required fix outcome (3-8 files, minimal)\n- Fix root cause only, keep existing API shape.\n- Do not add new dependencies.\n- Must pass new FAIL_TO_PASS tests and existing PASS_TO_PASS.\n\n## Verifiable FAIL_TO_PASS flips\n- validateCreateEventInput rejects endTime before start\n- validateCreateEventInput rejects endTime equal to start\n- validateCreateEventInput accepts valid endTime after start\n- validateCreateEventInput accepts missing endTime\n\n## PASS_TO_PASS (existing should stay green)\n- validateCreateEventInput rejects invalid time format\n- validateCreateEventInput accepts well-formed input\n- validateCreateEventInput strips privileged fields\n\n## Files to inspect\n- server/src/modules/events/events.create.test.ts\n- src/types/events.ts / server code as needed"
+authors = []
+keywords = []
+format = "swe_bench_single_turn"
+
+[metadata]
+
+[verifier]
+# Isolate grading from the agent: run the verifier in a fresh container so the
+# agent's code can't read the oracle under /tests at verify time. Opt-in —
+# uncomment to enable (also requires a verifier env def under tests/).
+# environment_mode = "separate"
+timeout_sec = 600.0
+# Run the grader as a non-root user so in-process agent code (Flow B) can't read
+# root-owned oracle files. Off by default because this template's test.sh uses
+# apt-get (needs root); enable it when your verifier imports/runs agent code
+# in-process and does not itself need root.
+# user = "nobody"
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+gpus = 0
+allow_internet = true
+mcp_servers = []
+
+[verifier.env]
+
+[environment.env]
+
+[solution.env]
