@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "current_step": 3,
+  "mode": "single",
+  "steps": [],
+  "started_at": "2026-08-18T10:09:00Z",
+  "last_updated": "2026-08-18T10:50:00Z",
+  "answers": {
+    "problem_type": "Bug fix",
+    "repo_url": "metainternal-aai/aai-labs-village (private snapshot)",
+    "base_commit_choice": "Specific commit",
+    "base_commit_hash": "0eed4c7a9ae61b7bc6c3c545e8ebc756902f2cbd"
+  },
+  "repo_url": "metainternal-aai/aai-labs-village",
+  "repo_name": "aai-labs-village",
+  "base_commit": "0eed4c7a9ae61b7bc6c3c545e8ebc756902f2cbd",
+  "language": "TypeScript",
+  "task_dir": "village-map-fallback-last-known-position",
+  "docker_built": false,
+  "instruction_written": true,
+  "solution_committed": true,
+  "tests_committed": true,
+  "qa_passed": false,
+  "models_tested": [],
+  "submitted": false,
+  "validation_passed": false,
+  "validation_attempts": 0,
+  "last_failure_phase": "",
+  "notes": "Task created for Village AAI Labs: map fallback to last known position fix. Harvester V1 from commit b6c9806. FAIL_TO_PASS 4 source checks (getLastKnownPositionAsync, resolvePosition, toUserLocation), PASS_TO_PASS 24 (clustering + location + runtime). Local validation: tsx --test passes on fixed, 4 fail on base 0eed4c7. Full village suite 114 PASS. Uses benchwarmer onboard automation."
+}

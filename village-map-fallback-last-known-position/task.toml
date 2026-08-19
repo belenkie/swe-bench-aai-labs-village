@@ -1,0 +1,40 @@
+schema_version = "1.1"
+
+[task]
+name = "codimango/village-map-fallback-last-known-position"
+description = "Village AAI Labs - Fix map fallback to last known position when no fresh fix available"
+authors = [{ name = "Eran Belenki", email = "ebelenki@meta.com" }]
+keywords = ["village", "map", "expo-location", "fallback", "geolocation", "reliability"]
+format = "swe_bench_single_turn"
+workstream = "swe_public_repo"
+
+[metadata]
+tags = ["village", "aai-labs", "map", "fallback", "harvester-v1", "human-reviewed"]
+category_usecase = "harden_resilience"
+category_subdomain = "mobile_xplat"
+reward_type = "binary"
+difficulty_hypothesis = "medium"
+novelty_risk = "low"
+base_commit = "0eed4c7a9ae61b7bc6c3c545e8ebc756902f2cbd"
+source_author = "shivamalisetti"
+
+[verifier]
+timeout_sec = 600.0
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+gpus = 0
+allow_internet = true
+mcp_servers = []
+
+[verifier.env]
+
+[environment.env]
+
+[solution.env]

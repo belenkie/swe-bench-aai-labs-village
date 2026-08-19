@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "current_step": 3,
+  "mode": "single",
+  "steps": [],
+  "started_at": "2026-08-17T14:58:00Z",
+  "last_updated": "2026-08-17T15:20:00Z",
+  "answers": {
+    "problem_type": "Bug fix",
+    "repo_url": "metainternal-aai/aai-labs-village (private snapshot)",
+    "base_commit_choice": "Specific commit",
+    "base_commit_hash": "4c695a5f915cadf87be1ffd198cc55575e22ea4d"
+  },
+  "repo_url": "metainternal-aai/aai-labs-village",
+  "repo_name": "aai-labs-village",
+  "base_commit": "4c695a5f915cadf87be1ffd198cc55575e22ea4d",
+  "language": "TypeScript",
+  "task_dir": "village-clustering-antimeridian-fix",
+  "docker_built": false,
+  "instruction_written": true,
+  "solution_committed": true,
+  "tests_committed": true,
+  "qa_passed": false,
+  "models_tested": [],
+  "submitted": false,
+  "validation_passed": false,
+  "validation_attempts": 0,
+  "last_failure_phase": "docker_daemon_down",
+  "notes": "Task created for Village AAI Labs: antimeridian clustering fix. Structural PASS, contamination LOW, manual gap verified (5 fail->6 pass). Docker oracle/nop blocked - daemon down, needs manual GUI start."
+}
