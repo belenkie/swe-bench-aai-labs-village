@@ -1,0 +1,40 @@
+schema_version = "1.1"
+
+[task]
+name = "codimango/aai-labs-village-bw618056"
+description = "# Village: fix(map) fallback to last known position when no fresh fix is available\n\n## Context\nVillage app centers the map on user's current location on mount via `useUserLocation()` hook (`src/components/map/useUserLocation.ts`). It uses `expo-location`.\n\nProblem: `Location.getCurrentPositionAsync()` only resolves when OS produces a *new* fix. Cold GPS start can take tens of seconds, and Android/iOS emulator only emits a position when explicitly pushed via extended controls. In both cases the hook threw, causing `VillageMap` to render \"Location Unavailable\" error screen instead of centering.\n\n## Expected behavior\n- When a fresh fix cannot be obtained, fall back to `Location.getLastKnownPositionAsync()`.\n- Only surface the error when there is no fix at all (both fresh and last-known fail).\n- Both call sites (initial mount effect and `fetchLocation` refresh) should share one helper to avoid duplicating position-mapping logic.\n- The helper should normalize `LocationObject` → `UserLocation` (latitude, longitude, accuracy, altitude).\n\n## Bug to fix\nIn current buggy state (`base_commit` `0eed4c7a9ae61b7bc6c3c545e8ebc756902f2cbd`):\n- `fetchLocation` directly calls `getCurrentPositionAsync` and maps coords inline, duplicated in the `useEffect` initial auto-fetch.\n- If `getCurrentPositionAsync` throws (cold start, emulator with no push), the error propagates and UI shows error, never trying `getLastKnownPositionAsync`.\n\n## Requirements\n- Create helper `toUserLocation(pos: Location.LocationObject): UserLocation` mapping coords.\n- Create async `resolvePosition(): Promise<UserLocation>` that:\n  1. tries `Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })` → `toUserLocation`\n  2. on catch, tries `Location.getLastKnownPositionAsync()`, if non-null returns `toUserLocation(last)`\n  3. otherwise re-throws original error\n- Refactor both `fetchLocation` and the initial `useEffect` to use `resolvePosition()`, removing duplicated mapping.\n- Keep permission handling intact: request foreground permission, handle denial.\n- Keep loading/error state handling.\n\n## Verification\n- Unit tests in `src/components/map/useUserLocation.fallback.test.ts` check:\n  - source file contains `getLastKnownPositionAsync`\n  - source file contains shared `resolvePosition` helper\n  - `resolvePosition` successfully falls back when fresh throws but last known exists\n  - `resolvePosition` throws when both fresh and last-known fail\n  - `toUserLocation` correctly maps LocationObject\n\nExisting tests (`src/lib/clustering.test.ts`, `src/lib/location.test.ts`) must still pass (PASS_TO_PASS).\n\n## References\nOriginal fix commit: `b6c980667aeeb57b10e194fa554ec7b91561a411` message:\n> fix(map): fall back to last known position when no fresh fix is available\n> getCurrentPositionAsync only resolves once the OS produces a *new* fix...\n> Fall back to getLastKnownPositionAsync and only surface the error when there is no fix at all."
+authors = []
+keywords = []
+format = "swe_bench_single_turn"
+
+[metadata]
+
+[verifier]
+# Isolate grading from the agent: run the verifier in a fresh container so the
+# agent's code can't read the oracle under /tests at verify time. Opt-in —
+# uncomment to enable (also requires a verifier env def under tests/).
+# environment_mode = "separate"
+timeout_sec = 600.0
+# Run the grader as a non-root user so in-process agent code (Flow B) can't read
+# root-owned oracle files. Off by default because this template's test.sh uses
+# apt-get (needs root); enable it when your verifier imports/runs agent code
+# in-process and does not itself need root.
+# user = "nobody"
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+gpus = 0
+allow_internet = true
+mcp_servers = []
+
+[verifier.env]
+
+[environment.env]
+
+[solution.env]
