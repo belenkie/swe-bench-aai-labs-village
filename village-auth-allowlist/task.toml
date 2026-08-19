@@ -1,0 +1,33 @@
+schema_version = "1.1"
+name = "codimango/village-auth-allowlist"
+description = "Village AAI Labs - isAllowedRedirectUri exact normalize trailing slash lower host reject exp://"
+authors = ["Village Team <team@village.example.com>"]
+keywords = ["auth", "allowlist", "redirect", "security", "open-redirect"]
+
+[format]
+type = "swe_bench_single_turn"
+
+[workstream]
+type = "swe_public_repo"
+repository = "metainternal-aai/aai-labs-village"
+
+[metadata]
+tags = ["auth", "allowlist", "redirect", "security", "open-redirect", "security", "swe-bench"]
+category_usecase = "boundary_condition"
+category_subdomain = "security"
+
+[reward]
+type = "binary"
+
+[verifier]
+timeout = 600
+
+[agent]
+timeout = 600
+
+[environment]
+build_timeout = 600
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+allow_internet = true

@@ -1,0 +1,22 @@
+diff --git a/src/lib/timezone.ts b/src/lib/timezone.ts
+index bbd561f..f4fb15c 100644
+--- a/src/lib/timezone.ts
++++ b/src/lib/timezone.ts
+@@ -14,6 +14,17 @@
+  */
+ 
+ export function getTimezoneOffsetMinutes(timeZone: string, date: Date): number {
++  // V-TZ-02: explicit invalid timezone guard — throw controlled error for SWE-bench village-timezone-invalid
++  if (typeof timeZone !== 'string' || timeZone.trim().length === 0) {
++    throw new Error(`Invalid timezone: ${String(timeZone)}`);
++  }
++  try {
++    // Validate IANA timezone via Intl — throws RangeError for invalid zones
++    new Intl.DateTimeFormat('en-US', { timeZone });
++  } catch {
++    throw new Error(`Invalid timezone: ${timeZone}`);
++  }
++
+   // Format date in timeZone and UTC, build UTC dates from parts, diff gives offset
+   const formatter = new Intl.DateTimeFormat('en-US', {
+     timeZone,

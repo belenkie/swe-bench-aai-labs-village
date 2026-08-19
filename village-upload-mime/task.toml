@@ -1,0 +1,33 @@
+schema_version = "1.1"
+name = "codimango/village-upload-mime"
+description = "Village AAI Labs - detectMimeFromBuffer WebP RIFF WEBP + processImageAndStripExif sharp rotate EXIF strip"
+authors = ["Village Team <team@village.example.com>"]
+keywords = ["upload", "mime", "webp", "exif", "sharp"]
+
+[format]
+type = "swe_bench_single_turn"
+
+[workstream]
+type = "swe_public_repo"
+repository = "metainternal-aai/aai-labs-village"
+
+[metadata]
+tags = ["upload", "mime", "webp", "exif", "sharp", "upload", "swe-bench"]
+category_usecase = "boundary_condition"
+category_subdomain = "upload"
+
+[reward]
+type = "binary"
+
+[verifier]
+timeout = 600
+
+[agent]
+timeout = 600
+
+[environment]
+build_timeout = 600
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+allow_internet = true

@@ -1,0 +1,33 @@
+schema_version = "1.1"
+name = "codimango/village-map-fallback-last-known-position"
+description = "Village AAI Labs - Fall back to getLastKnownPositionAsync when getCurrentPositionAsync fails cold GPS"
+authors = ["Village Team <team@village.example.com>"]
+keywords = ["location", "expo-location", "fallback", "gps", "map"]
+
+[format]
+type = "swe_bench_single_turn"
+
+[workstream]
+type = "swe_public_repo"
+repository = "metainternal-aai/aai-labs-village"
+
+[metadata]
+tags = ["location", "expo-location", "fallback", "gps", "map", "boundary_condition", "swe-bench"]
+category_usecase = "boundary_condition"
+category_subdomain = "boundary_condition"
+
+[reward]
+type = "binary"
+
+[verifier]
+timeout = 600
+
+[agent]
+timeout = 600
+
+[environment]
+build_timeout = 600
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+allow_internet = true

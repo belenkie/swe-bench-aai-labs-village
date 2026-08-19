@@ -1,0 +1,45 @@
+diff --git a/server/src/modules/events/events.routes.ts b/server/src/modules/events/events.routes.ts
+index 80e5831..455d669 100644
+--- a/server/src/modules/events/events.routes.ts
++++ b/server/src/modules/events/events.routes.ts
+@@ -31,12 +31,19 @@ function validateBounds(query: any): BoundsValidationResult {
+     if (raw === undefined || raw === null || raw === "") {
+       return { ok: false, message: `missing ${f}: query param ${f} is required` };
+     }
++    // V-GEO-02 variant: reject array / empty-string-array edge (SWE-bench village-validate-bounds-edge)
++    if (Array.isArray(raw)) {
++      return { ok: false, message: `${f} must be a number: got ${JSON.stringify(raw)}` };
++    }
+   }
+ 
+   // 2) non-numeric
+   const parsed: Record<string, number> = {};
+   for (const f of fields) {
+     const raw = query[f];
++    if (Array.isArray(raw)) {
++      return { ok: false, message: `${f} must be a number: got ${JSON.stringify(raw)}` };
++    }
+     // parseFloat handles strings; we already checked missing
+     const num = typeof raw === "number" ? raw : parseFloat(String(raw));
+     if (!Number.isFinite(num)) {
+@@ -273,6 +280,10 @@ export function validateLimit(raw: unknown): LimitValidationResult {
+     if (!Number.isInteger(num)) {
+       return { ok: false, message: `limit must be an integer: got ${JSON.stringify(raw)}` };
+     }
++    // V-GEO-02 variant: reject negative, zero, >100 (SWE-bench village-validate-bounds-edge)
++    if (num < 1 || num > 100) {
++      return { ok: false, message: `limit out of range: must be between 1 and 100, got ${num}` };
++    }
+     return { ok: true, value: num };
+   }
+ 
+@@ -283,6 +294,10 @@ export function validateLimit(raw: unknown): LimitValidationResult {
+   if (!Number.isInteger(num)) {
+     return { ok: false, message: `limit must be an integer: got ${JSON.stringify(raw)}` };
+   }
++  // V-GEO-02 variant: range guard
++  if (num < 1 || num > 100) {
++    return { ok: false, message: `limit out of range: must be between 1 and 100, got ${num}` };
++  }
+   return { ok: true, value: num };
+ }

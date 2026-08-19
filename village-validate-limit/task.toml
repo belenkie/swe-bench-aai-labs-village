@@ -1,0 +1,33 @@
+schema_version = "1.1"
+name = "codimango/village-validate-limit"
+description = "Village AAI Labs - validateLimit <1 >100 integer array empty guards"
+authors = ["Village Team <team@village.example.com>"]
+keywords = ["validation", "limit", "pagination", "bounds"]
+
+[format]
+type = "swe_bench_single_turn"
+
+[workstream]
+type = "swe_public_repo"
+repository = "metainternal-aai/aai-labs-village"
+
+[metadata]
+tags = ["validation", "limit", "pagination", "bounds", "validation", "swe-bench"]
+category_usecase = "boundary_condition"
+category_subdomain = "validation"
+
+[reward]
+type = "binary"
+
+[verifier]
+timeout = 600
+
+[agent]
+timeout = 600
+
+[environment]
+build_timeout = 600
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+allow_internet = true

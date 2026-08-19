@@ -1,0 +1,33 @@
+schema_version = "1.1"
+name = "codimango/village-geo-coverage-clamp"
+description = "Village AAI Labs - boundsCoverage clamp 0..1 Math.max(0,min(1,coverage))"
+authors = ["Village Team <team@village.example.com>"]
+keywords = ["geo", "boundsCoverage", "clamp", "coverage"]
+
+[format]
+type = "swe_bench_single_turn"
+
+[workstream]
+type = "swe_public_repo"
+repository = "metainternal-aai/aai-labs-village"
+
+[metadata]
+tags = ["geo", "boundsCoverage", "clamp", "coverage", "geospatial", "swe-bench"]
+category_usecase = "boundary_condition"
+category_subdomain = "geospatial"
+
+[reward]
+type = "binary"
+
+[verifier]
+timeout = 600
+
+[agent]
+timeout = 600
+
+[environment]
+build_timeout = 600
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+allow_internet = true

@@ -1,0 +1,71 @@
+diff --git a/src/lib/clustering.ts b/src/lib/clustering.ts
+index b077701..aad6731 100644
+--- a/src/lib/clustering.ts
++++ b/src/lib/clustering.ts
+@@ -1,5 +1,24 @@
+ import type { VillageEvent, EventBounds } from '@/types/events';
+ 
++/** Normalize longitude into [-180,180) — handles antimeridian wrap */
++export function normalizeLongitude(lng: number): number {
++  return ((((lng + 180) % 360) + 360) % 360) - 180;
++}
++
++/** Circular mean of longitudes — correct across antimeridian (e.g. 179 and -179 => 180 not 0) */
++export function averageLongitudes(lngs: number[]): number {
++  if (lngs.length === 0) return 0;
++  let sinSum = 0;
++  let cosSum = 0;
++  for (const lng of lngs) {
++    const rad = (lng * Math.PI) / 180;
++    sinSum += Math.sin(rad);
++    cosSum += Math.cos(rad);
++  }
++  const avgRad = Math.atan2(sinSum / lngs.length, cosSum / lngs.length);
++  return normalizeLongitude((avgRad * 180) / Math.PI);
++}
++
+ export type EventCluster = {
+   id: string;
+   latitude: number;
+@@ -41,16 +60,22 @@ export function metersPerPixel(latitude: number, zoom: number): number {
+  * Derive meters-per-pixel from actual map viewport + geographic bounds.
+  * This makes clustering responsive to both the visible map area and its
+  * on-screen size — no hardcoded meter radius.
+- *
+- * Note: does NOT handle antimeridian wrap (west=179, east=-179 → width 2° not 358°).
+- * Village is US-centric (SF) so low risk; if international bounds are ever used,
+- * add wrapping: if east < west then east += 360, then haversine with normalized lng.
++ * Now handles antimeridian wrap: if east < west, east +=360 for width calc.
+  */
+ export function metersPerPixelFromViewport(bounds: EventBounds, viewport: ViewportSize): number {
+   const centerLat = (bounds.north + bounds.south) / 2;
+-  const centerLng = (bounds.east + bounds.west) / 2;
++  let east = bounds.east;
++  let west = bounds.west;
++  let eastNormalized = east;
++  if (east < west) {
++    eastNormalized = east + 360;
++  }
++  const centerLngRaw = (west + eastNormalized) / 2;
++  const centerLng = normalizeLongitude(centerLngRaw);
+ 
+-  const widthMeters = haversineMeters({ latitude: centerLat, longitude: bounds.west }, { latitude: centerLat, longitude: bounds.east });
++  const westNorm = normalizeLongitude(west);
++  const eastForCalc = east < west ? normalizeLongitude(east) : east;
++  const widthMeters = haversineMeters({ latitude: centerLat, longitude: westNorm }, { latitude: centerLat, longitude: eastForCalc });
+   const heightMeters = haversineMeters({ latitude: bounds.south, longitude: centerLng }, { latitude: bounds.north, longitude: centerLng });
+ 
+   const mppX = viewport.width > 0 ? widthMeters / viewport.width : 0;
+@@ -213,10 +238,9 @@ type MutableCluster = {
+ export function getClusterCentroid(events: VillageEvent[]): { latitude: number; longitude: number } {
+   if (events.length === 0) return { latitude: 0, longitude: 0 };
+   let lat = 0;
+-  let lng = 0;
+   for (const ev of events) {
+     lat += ev.location.latitude;
+-    lng += ev.location.longitude;
+   }
+-  return { latitude: lat / events.length, longitude: lng / events.length };
++  const lngs = events.map((e) => e.location.longitude);
++  return { latitude: lat / events.length, longitude: averageLongitudes(lngs) };
+ }

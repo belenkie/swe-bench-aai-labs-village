@@ -1,0 +1,34 @@
+diff --git a/src/components/map/useUserLocation.ts b/src/components/map/useUserLocation.ts
+index bdf638c..63b4fd4 100644
+--- a/src/components/map/useUserLocation.ts
++++ b/src/components/map/useUserLocation.ts
+@@ -3,6 +3,11 @@
+  * Uses expo-location.
+  */
+ 
++/**
++ * Hook to get user's current location - used to center map initially
++ * Uses expo-location.
++ */
++
+ import { useEffect, useState, useCallback } from 'react';
+ import * as Location from 'expo-location';
+ 
+@@ -82,6 +87,17 @@ export function useUserLocation(): UseUserLocationResult {
+           setLoading(false);
+           return null;
+         }
++
++        if (currentStatus === Location.PermissionStatus.GRANTED) {
++          const loc = await resolvePosition();
++          if (cancelled) return;
++          setLocation(loc);
++        }
++      } catch (e) {
++        if (!cancelled) {
++    let cancelled = false;
++          return null;
++        }
+       }
+ 
+       const loc = await resolvePosition();

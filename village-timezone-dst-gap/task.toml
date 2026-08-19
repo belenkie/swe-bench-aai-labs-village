@@ -1,0 +1,33 @@
+schema_version = "1.1"
+name = "codimango/village-timezone-dst-gap"
+description = "Village AAI Labs - convertLocalWallToTimezone DST gap fallback next valid"
+authors = ["Village Team <team@village.example.com>"]
+keywords = ["timezone", "dst", "gap", "convertLocalWallToTimezone"]
+
+[format]
+type = "swe_bench_single_turn"
+
+[workstream]
+type = "swe_public_repo"
+repository = "metainternal-aai/aai-labs-village"
+
+[metadata]
+tags = ["timezone", "dst", "gap", "convertLocalWallToTimezone", "timezone", "swe-bench"]
+category_usecase = "boundary_condition"
+category_subdomain = "timezone"
+
+[reward]
+type = "binary"
+
+[verifier]
+timeout = 600
+
+[agent]
+timeout = 600
+
+[environment]
+build_timeout = 600
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+allow_internet = true

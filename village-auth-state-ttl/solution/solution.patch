@@ -1,0 +1,47 @@
+diff --git a/server/src/modules/auth/state.ts b/server/src/modules/auth/state.ts
+index 02ca361..91dbf23 100644
+--- a/server/src/modules/auth/state.ts
++++ b/server/src/modules/auth/state.ts
+@@ -21,6 +21,30 @@ export type StatePayload = {
+ 
+ export const STATE_TTL_MS = 10 * 60 * 1000;
+ 
++// V-AUTH-01: nonce replay protection — LRU cache of 1000 recent nonces to prevent reuse
++const MAX_NONCE_CACHE = 1000;
++const seenNonces = new Set<string>();
++const nonceQueue: string[] = [];
++
++function isNonceReplay(nonce: string): boolean {
++  return seenNonces.has(nonce);
++}
++
++function markNonceUsed(nonce: string): void {
++  if (seenNonces.has(nonce)) return;
++  seenNonces.add(nonce);
++  nonceQueue.push(nonce);
++  if (nonceQueue.length > MAX_NONCE_CACHE) {
++    const oldest = nonceQueue.shift()!;
++    seenNonces.delete(oldest);
++  }
++}
++
++export function clearNonceCacheForTesting(): void {
++  seenNonces.clear();
++  nonceQueue.length = 0;
++}
++
+ // Bump the version suffix to rotate the derived key independently of JWT_SECRET.
+ const STATE_KEY_INFO = "village:oauth-state:v1";
+ const STATE_KEY_BYTES = 32;
+@@ -80,5 +104,11 @@ export function verifyState(token: string, secret: string): StatePayload {
+   if (now - payload.iat > STATE_TTL_MS) throw new Error("[state] Expired");
+   if (payload.iat > now + 60_000) throw new Error("[state] Invalid iat (future)");
+ 
++  // V-AUTH-01: nonce reuse guard — prevent replay attacks
++  if (isNonceReplay(payload.nonce)) {
++    throw new Error("[state] Nonce already used");
++  }
++  markNonceUsed(payload.nonce);
++
+   return payload;
+ }

@@ -1,0 +1,12 @@
+diff --git a/src/lib/geo.ts b/src/lib/geo.ts
+index e4e6808..1e94906 100644
+--- a/src/lib/geo.ts
++++ b/src/lib/geo.ts
+@@ -70,5 +70,6 @@ export function boundsCoverage(viewport: EventBounds, areas: EventBounds[]): num
+   const total = boundsArea(viewport);
+   if (total === 0) return 0;
+   const uncovered = remaining.reduce((sum, r) => sum + boundsArea(r), 0);
+-  return 1 - uncovered / total;
++  const coverage = 1 - uncovered / total;
++  return Math.max(0, Math.min(1, coverage));
+ }
