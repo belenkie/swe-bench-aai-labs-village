@@ -1,0 +1,47 @@
+diff --git a/server/src/modules/events/events.routes.ts b/server/src/modules/events/events.routes.ts
+index 80e5831..0a1c350 100644
+--- a/server/src/modules/events/events.routes.ts
++++ b/server/src/modules/events/events.routes.ts
+@@ -257,32 +257,29 @@ export function validateLimit(raw: unknown): LimitValidationResult {
+     return { ok: false, message: `limit must be a number: got ${JSON.stringify(raw)}` };
+   }
+ 
+-  if (typeof raw === "string") {
++  let num: number;
++  if (typeof raw === "number") {
++    num = raw;
++  } else {
+     const trimmed = str.trim();
+     if (!/^-?\d+$/.test(trimmed)) {
+-      const num = Number(trimmed);
+-      if (!Number.isFinite(num)) {
++      const maybeNum = Number(trimmed);
++      if (!Number.isFinite(maybeNum)) {
+         return { ok: false, message: `limit must be a number: got ${JSON.stringify(raw)}` };
+       }
+       return { ok: false, message: `limit must be an integer: got ${JSON.stringify(raw)}` };
+     }
+-    const num = Number(trimmed);
+-    if (!Number.isFinite(num)) {
+-      return { ok: false, message: `limit must be a number: got ${JSON.stringify(raw)}` };
+-    }
+-    if (!Number.isInteger(num)) {
+-      return { ok: false, message: `limit must be an integer: got ${JSON.stringify(raw)}` };
+-    }
+-    return { ok: true, value: num };
++    num = Number(trimmed);
+   }
+-
+-  const num = typeof raw === "number" ? raw : Number(str);
+   if (!Number.isFinite(num)) {
+     return { ok: false, message: `limit must be a number: got ${JSON.stringify(raw)}` };
+   }
+   if (!Number.isInteger(num)) {
+     return { ok: false, message: `limit must be an integer: got ${JSON.stringify(raw)}` };
+   }
++  if (num < 1 || num > 100) {
++    return { ok: false, message: `limit out of range: must be between 1 and 100, got ${num}` };
++  }
+   return { ok: true, value: num };
+ }
+ 

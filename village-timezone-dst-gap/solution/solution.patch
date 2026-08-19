@@ -1,0 +1,113 @@
+diff --git a/src/lib/timezone.ts b/src/lib/timezone.ts
+index bbd561f..00b407f 100644
+--- a/src/lib/timezone.ts
++++ b/src/lib/timezone.ts
+@@ -12,38 +12,82 @@
+  * - Store UTC instant that renders as that wall in event tz
+  * - Render via toLocaleString({ timeZone: eventTz })
+  */
++export function convertLocalWallToTimezone(localDate: Date, targetTimeZone: string): Date {
++  // Extract wall parts from device-local Date
++  const year = localDate.getFullYear();
++  const month = localDate.getMonth(); // 0-indexed for Date.UTC
++  const day = localDate.getDate();
++  const hour = localDate.getHours();
++  const minute = localDate.getMinutes();
++  const second = localDate.getSeconds();
++  const ms = localDate.getMilliseconds();
+ 
+-export function getTimezoneOffsetMinutes(timeZone: string, date: Date): number {
+-  // Format date in timeZone and UTC, build UTC dates from parts, diff gives offset
+-  const formatter = new Intl.DateTimeFormat('en-US', {
+-    timeZone,
+-    year: 'numeric',
+-    month: '2-digit',
+-    day: '2-digit',
+-    hour: '2-digit',
+-    minute: '2-digit',
+-    second: '2-digit',
+-    hour12: false,
+-  });
++  const desiredWallAsUtcMs = Date.UTC(year, month, day, hour, minute, second, ms);
+ 
+-  const parts = formatter.formatToParts(date);
+-  const get = (type: string) => {
+-    const p = parts.find((x) => x.type === type);
+-    return p ? Number(p.value) : 0;
+-  };
++  // Iterative solve — usually converges in 1-2 iterations for fixed offset,
++  // up to 3-4 around DST boundaries
++  let guessUtcMs = desiredWallAsUtcMs;
++  for (let i = 0; i < 5; i++) {
++    const guessDate = new Date(guessUtcMs);
++    const offsetMinutes = getTimezoneOffsetMinutes(targetTimeZone, guessDate);
++    const nextUtcMs = desiredWallAsUtcMs - offsetMinutes * 60 * 1000;
++    if (Math.abs(nextUtcMs - guessUtcMs) < 1000) {
++      guessUtcMs = nextUtcMs;
++      break;
++    }
++    guessUtcMs = nextUtcMs;
++  }
+ 
+-  const year = get('year');
+-  const month = get('month') - 1;
+-  const day = get('day');
+-  const hour = get('hour');
+-  const minute = get('minute');
+-  const second = get('second');
++  const result = new Date(guessUtcMs);
++  try {
++    const checkFormatter = new Intl.DateTimeFormat('en-US', {
++      timeZone: targetTimeZone,
++      year: 'numeric',
++      month: 'numeric',
++      day: 'numeric',
++      hour: 'numeric',
++      minute: 'numeric',
++      hour12: false,
++    });
++    const parts = checkFormatter.formatToParts(result);
++    const get = (type: string) => {
++      const p = parts.find((x) => x.type === type);
++      return p ? Number(p.value) : 0;
++    };
++    const resultYear = get('year');
++    const resultMonth = get('month');
++    const resultDay = get('day');
++    const resultHour = get('hour');
++    const resultMinute = get('minute');
+ 
+-  const tzAsUtc = Date.UTC(year, month, day, hour, minute, second);
+-  // offset = wallAsUtc - UTC
+-  return (tzAsUtc - date.getTime()) / 60000;
++    if (
++      resultYear !== year ||
++      resultMonth - 1 !== month ||
++      resultDay !== day ||
++      resultHour !== hour ||
++      resultMinute !== minute
++    ) {
++      for (let forward = 1; forward <= 3; forward++) {
++        const newWallMs = desiredWallAsUtcMs + forward * 60 * 60 * 1000;
++        let guess = newWallMs;
++        for (let i = 0; i < 5; i++) {
++          const gd = new Date(guess);
++          const off = getTimezoneOffsetMinutes(targetTimeZone, gd);
++          const next = newWallMs - off * 60 * 1000;
++          if (Math.abs(next - guess) < 1000) { guess = next; break; }
++          guess = next;
++        }
++        const candidate = new Date(guess);
++        return candidate;
++      }
++    }
++  } catch {}
++  return result;
+ }
+ 
++/**
++  * Format a UTC instant in a specific IANA timezone — for UI display
++  */
+ /**
+  * Convert a device-local wall Date (from DateTimePicker) to UTC instant that
+  * renders as same wall in target IANA timezone.

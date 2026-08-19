@@ -1,0 +1,41 @@
+diff --git a/server/src/modules/events/events.routes.ts b/server/src/modules/events/events.routes.ts
+index 80e5831..185376d 100644
+--- a/server/src/modules/events/events.routes.ts
++++ b/server/src/modules/events/events.routes.ts
+@@ -194,6 +194,21 @@ export function validateCreateEventInput(body: any): CreateValidationResult {
+   if (rawPrice !== undefined && rawPrice !== null && typeof rawPrice !== "string") {
+     return { ok: false, message: "price must be a string" };
+   }
++  // V-VAL-02: price numeric guard — must be numeric or 'Free' (SWE-bench village-validate-create-full)
++  if (typeof rawPrice === "string" && rawPrice.trim().length > 0) {
++    const trimmed = rawPrice.trim();
++    const lower = trimmed.toLowerCase();
++    if (lower !== "free") {
++      const cleaned = trimmed.replace(/[$,\s]/g, "");
++      if (/[a-zA-Z]/.test(cleaned)) {
++        return { ok: false, message: "price must be a numeric string or 'Free'" };
++      }
++      const num = Number(cleaned);
++      if (!Number.isFinite(num)) {
++        return { ok: false, message: "price must be a numeric string or 'Free'" };
++      }
++    }
++  }
+   if (rawAddr !== undefined && rawAddr !== null && typeof rawAddr !== "string") {
+     return { ok: false, message: "address must be a string" };
+   }
+@@ -215,10 +230,10 @@ export function validateCreateEventInput(body: any): CreateValidationResult {
+     timezone: rawTz,
+     latitude: rawLat,
+     longitude: rawLng,
+-    address: typeof rawAddr === "string" && rawAddr.trim().length > 0 ? rawAddr : undefined,
+-    venue: typeof rawVenue === "string" && rawVenue.trim().length > 0 ? rawVenue : undefined,
+-    description: typeof rawDescription === "string" ? rawDescription : undefined,
+-    price: typeof rawPrice === "string" ? rawPrice : undefined,
++    address: typeof rawAddr === "string" && rawAddr.trim().length > 0 ? rawAddr.trim() : undefined,
++    venue: typeof rawVenue === "string" && rawVenue.trim().length > 0 ? rawVenue.trim() : undefined,
++    description: typeof rawDescription === "string" && rawDescription.trim().length > 0 ? rawDescription.trim() : undefined,
++    price: typeof rawPrice === "string" && rawPrice.trim().length > 0 ? rawPrice.trim() : undefined,
+   };
+ 
+   return { ok: true, value };

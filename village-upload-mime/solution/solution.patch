@@ -1,0 +1,75 @@
+diff --git a/server/src/modules/uploads/uploads.routes.ts b/server/src/modules/uploads/uploads.routes.ts
+index cd9124c..b694b50 100644
+--- a/server/src/modules/uploads/uploads.routes.ts
++++ b/server/src/modules/uploads/uploads.routes.ts
+@@ -21,6 +21,7 @@ function ensureUploadsDir() {
+  * Detect MIME and extension from magic bytes.
+  * Returns null if not a recognized image.
+  * Covers JPEG, PNG, GIF, WebP - sufficient for Village.
++ * WebP: RIFF container + WEBP at offset 8.
+  */
+ function detectMimeFromBuffer(buf: Buffer): { mime: string; ext: string } | null {
+   if (buf.length < 12) return null;
+@@ -73,6 +74,26 @@ function detectMimeFromBuffer(buf: Buffer): { mime: string; ext: string } | null
+   return null;
+ }
+ 
++async function processImageAndStripExif(input: Buffer, mime: string): Promise<Buffer> {
++  try {
++    if (mime === "image/jpeg") {
++      return await sharp(input).rotate().jpeg({ quality: 85 }).toBuffer();
++    }
++    if (mime === "image/png") {
++      return await sharp(input).rotate().png().toBuffer();
++    }
++    if (mime === "image/webp") {
++      return await sharp(input).rotate().webp({ quality: 85 }).toBuffer();
++    }
++    if (mime === "image/gif") {
++      return await sharp(input, { animated: true }).toBuffer();
++    }
++    return await sharp(input).rotate().toBuffer();
++  } catch (err) {
++    throw err;
++  }
++}
++
+ function getPublicUrl(req: any, filename: string): string {
+   const host = req.headers.host;
+   const proto =
+@@ -96,32 +117,9 @@ async function streamToBuffer(stream: any): Promise<Buffer> {
+   return Buffer.concat(chunks);
+ }
+ 
+-async function processImageAndStripExif(
+-  input: Buffer,
+-  mime: string,
+-): Promise<Buffer> {
+-  // GIF: sharp will de-animate to first frame; we keep original to avoid breaking animation,
+-  // but GIFs rarely contain GPS EXIF, and the spec requires stripping for JPEG primarily.
+-  // For consistency, we still process GIF via sharp to strip any possible metadata,
+-  // accepting first-frame output as acceptable for cover photo.
+-  // If sharp fails (corrupt), throw.
+-  try {
+-    if (mime === "image/jpeg") {
+-      // Use standard jpeg without mozjpeg for hermetic tests — mozjpeg can be stricter on tiny test images
+-      return await sharp(input).rotate().jpeg({ quality: 85 }).toBuffer();
+-    }
+-    if (mime === "image/png") {
+-      return await sharp(input).rotate().png().toBuffer();
+-    }
+-    if (mime === "image/webp") {
+-      return await sharp(input).rotate().webp({ quality: 85 }).toBuffer();
+-    }
+-    if (mime === "image/gif") {
+-      return await sharp(input, { animated: true }).toBuffer();
+-    }
+-    return await sharp(input).rotate().toBuffer();
+-  } catch (err) {
+-    throw err;
++async function saveToS3IfConfigured(
++  filename: string,
++  buffer: Buffer,
+   }
+ }
+ 

@@ -1,0 +1,20 @@
+{
+  "repo": "metainternal-aai/aai-labs-village",
+  "instance_id": "aai_metainternal-aai__aai-labs-village-c51d1268118d1d5673fb274d8b648fbcd1ce8678",
+  "base_commit": "c51d1268118d1d5673fb274d8b648fbcd1ce8678",
+  "patch": "diff --git a/src/lib/timezone.ts b/src/lib/timezone.ts\nindex bbd561f..f4fb15c 100644\n--- a/src/lib/timezone.ts\n+++ b/src/lib/timezone.ts\n@@ -14,6 +14,17 @@\n  */\n \n export function getTimezoneOffsetMinutes(timeZone: string, date: Date): number {\n+  // V-TZ-02: explicit invalid timezone guard \u2014 throw controlled error for SWE-bench village-timezone-invalid\n+  if (typeof timeZone !== 'string' || timeZone.trim().length === 0) {\n+    throw new Error(`Invalid timezone: ${String(timeZone)}`);\n+  }\n+  try {\n+    // Validate IANA timezone via Intl \u2014 throws RangeError for invalid zones\n+    new Intl.DateTimeFormat('en-US', { timeZone });\n+  } catch {\n+    throw new Error(`Invalid timezone: ${timeZone}`);\n+  }\n+\n   // Format date in timeZone and UTC, build UTC dates from parts, diff gives offset\n   const formatter = new Intl.DateTimeFormat('en-US', {\n     timeZone,",
+  "test_patch": "diff --git a/src/lib/timezone.invalid.test.ts b/src/lib/timezone.invalid.test.ts\nnew file mode 100644\nindex 0000000..b1c2d3e\n--- /dev/null\n+++ b/src/lib/timezone.invalid.test.ts\n@@ -0,0 +1,29 @@\n+import { describe, it } from \"node:test\";\n+import assert from \"node:assert/strict\";\n+import { getTimezoneOffsetMinutes } from \"./timezone\";\n+\n+describe(\"timezone invalid\u201d, () => {\n+  it(\"getTimezoneOffsetMinutes throws on invalid timezone\", () => {\n+    const d = new Date(\"2026-01-01T00:00:00Z\");\n+    assert.throws(() => getTimezoneOffsetMinutes(\"Invalid/Zone\", d), /Invalid timezone/);\n+  });\n+  it(\"getTimezoneOffsetMinutes throws on empty string\", () => {\n+    const d = new Date();\n+    assert.throws(() => getTimezoneOffsetMinutes(\"\", d), /Invalid timezone/);\n+  });\n+  it(\"getTimezoneOffsetMinutes accepts valid UTC\", () => {\n+    const d = new Date(\"2026-01-01T00:00:00Z\");\n+    const off = getTimezoneOffsetMinutes(\"UTC\", d);\n+    assert.equal(off, 0);\n+  });\n+  it(\"getTimezoneOffsetMinutes accepts America/Los_Angeles\", () => {\n+    const d = new Date(\"2026-07-01T00:00:00Z\");\n+    const off = getTimezoneOffsetMinutes(\"America/Los_Angeles\", d);\n+    assert.ok(typeof off === \"number\" && Number.isFinite(off));\n+  });\n+});\n",
+  "fail_to_pass": [
+    "getTimezoneOffsetMinutes throws on invalid timezone",
+    "getTimezoneOffsetMinutes throws on empty string"
+  ],
+  "pass_to_pass": [
+    "getTimezoneOffsetMinutes accepts valid UTC",
+    "getTimezoneOffsetMinutes accepts America/Los_Angeles"
+  ],
+  "selected_test_files_to_run": [
+    "src/lib/timezone.invalid.test.ts",
+    "src/lib/timezone.test.ts"
+  ],
+  "before_repo_set_cmd": ""
+}

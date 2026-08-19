@@ -1,0 +1,29 @@
+diff --git a/server/src/modules/events/events.routes.ts b/server/src/modules/events/events.routes.ts
+index 80e5831..ddceeae 100644
+--- a/server/src/modules/events/events.routes.ts
++++ b/server/src/modules/events/events.routes.ts
+@@ -177,6 +177,7 @@ export function validateCreateEventInput(body: any): CreateValidationResult {
+ 
+   // optional string fields
+   const rawEndTime = b["endTime"];
++  let parsedEndTimeMs: number | null = null;
+   if (rawEndTime !== undefined && rawEndTime !== null) {
+     if (typeof rawEndTime !== "string") {
+       return { ok: false, message: "endTime must be a string" };
+@@ -184,6 +185,16 @@ export function validateCreateEventInput(body: any): CreateValidationResult {
+     if (rawEndTime.trim().length > 0 && Number.isNaN(Date.parse(rawEndTime))) {
+       return { ok: false, message: `invalid endTime: must be a valid ISO 8601 date, got ${JSON.stringify(rawEndTime)}` };
+     }
++    if (rawEndTime.trim().length > 0) {
++      parsedEndTimeMs = Date.parse(rawEndTime);
++    }
++  }
++
++  if (parsedEndTimeMs !== null) {
++    const startMs = Date.parse(rawTime as string);
++    if (!Number.isNaN(startMs) && parsedEndTimeMs <= startMs) {
++      return { ok: false, message: "endTime must be after time" };
++    }
+   }
+ 
+   const rawDescription = b["description"];

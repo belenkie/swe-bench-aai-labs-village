@@ -1,0 +1,33 @@
+schema_version = "1.1"
+
+[task]
+name = "codimango/village-timezone-invalid"
+description = "Village AAI Labs - village-timezone-invalid"
+authors = [{ name = "Eran Belenki", email = "ebelenki@meta.com" }]
+keywords = ["geospatial", "validation", "village", "aai-labs"]
+format = "swe_bench_single_turn"
+workstream = "swe_public_repo"
+
+[metadata]
+tags = ["geospatial", "validation"]
+category_usecase = "boundary_condition"
+category_subdomain = "date_time"
+reward_type = "binary"
+
+[verifier]
+timeout_sec = 600.0
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+gpus = 0
+allow_internet = true
+
+[verifier.env]
+[environment.env]
+[solution.env]

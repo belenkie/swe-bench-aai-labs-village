@@ -1,0 +1,54 @@
+diff --git a/server/src/modules/users/users.validators.ts b/server/src/modules/users/users.validators.ts
+index 98205ef..e27efdf 100644
+--- a/server/src/modules/users/users.validators.ts
++++ b/server/src/modules/users/users.validators.ts
+@@ -51,16 +51,24 @@ function validateDisplayName(name?: string): string | undefined {
+   const trimmed = name.trim();
+   if (trimmed.length < 2) validated("display_name too short (min 2)");
+   if (trimmed.length > 50) validated("display_name too long (max 50)");
+-  // Reject email-like display names to avoid phishing/confusion — Village shows display_name publicly
+   if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmed)) {
+     validated("display_name must not be an email");
+   }
+   if (/[\x00-\x1F]/.test(trimmed)) validated("display_name contains control chars");
+-  // Basic XSS guard — allow unicode but reject obvious tag delimiters
+   if (/[<>]/.test(trimmed)) validated("display_name contains invalid characters");
+   return trimmed;
+ }
+ 
++function validateBio(bio?: string): string | undefined {
++  if (bio === undefined) return undefined;
++  if (bio === "") return "";
++  if (bio.length > 160) validated("bio too long (max 160)");
++  if (/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(bio)) validated("bio contains control chars");
++  if (/[<>]/.test(bio)) validated("bio contains invalid characters");
++  const trimmed = bio.trim();
++  return trimmed || undefined;
++}
++
+ function validateBio(bio?: string): string | undefined {
+   if (bio === undefined) return undefined;
+   if (bio === "") return "";
+@@ -141,8 +149,14 @@ function validateTimezone(tz?: string): string | undefined {
+ 
+ function validateAvatarUrl(url?: string): string | undefined {
+   if (url === undefined) return undefined;
+-  // Allow empty string to signal clear — repo maps "" -> NULL
+   if (url === "") return "";
++  if (!url) return undefined;
++  if (url.length > 2048) validated("avatar_url too long (max 2048)");
++  if (!url.startsWith("https://")) validated("avatar_url must be https");
++  if (/[\x00-\x1F]/.test(url)) validated("avatar_url contains control chars");
++  if (/[<>]/.test(url)) validated("avatar_url contains invalid characters");
++  return url;
++}
+   if (!url) return undefined;
+   if (url.length > 2048) validated("avatar_url too long (max 2048)");
+   if (!url.startsWith("https://")) validated("avatar_url must be https");
+@@ -247,4 +261,4 @@ export function fuzzLocation(lat: number, lng: number, userId: string): { lat: n
+   const clampedLng = Math.max(-180, Math.min(180, snappedLng));
+ 
+   return { lat: clampedLat, lng: clampedLng };
+-}
+\ No newline at end of file
++}
