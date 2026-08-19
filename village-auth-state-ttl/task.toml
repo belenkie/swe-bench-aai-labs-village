@@ -2,7 +2,7 @@ schema_version = "1.1"
 
 [task]
 name = "codimango/village-auth-state-ttl"
-description = "Village AAI Labs - village-auth-state-ttl"
+description = "Village AAI Labs - OAuth state nonce replay protection and TTL validation"
 authors = [{ name = "Eran Belenki", email = "ebelenki@meta.com" }]
 keywords = ["geospatial", "validation", "village", "aai-labs"]
 format = "swe_bench_single_turn"

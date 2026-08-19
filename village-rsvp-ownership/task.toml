@@ -2,7 +2,7 @@ schema_version = "1.1"
 
 [task]
 name = "codimango/village-rsvp-ownership"
-description = "Village AAI Labs - village-rsvp-ownership"
+description = "Village AAI Labs - RSVP ownership guard and attendee list owner-only 403"
 authors = [{ name = "Eran Belenki", email = "ebelenki@meta.com" }]
 keywords = ["geospatial", "validation", "village", "aai-labs"]
 format = "swe_bench_single_turn"

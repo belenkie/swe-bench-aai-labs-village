@@ -18,5 +18,17 @@
   ],
   "selected_test_files_to_run": [
     "server/src/modules/auth/allowlist.test.ts"
+  ],
+  "FAIL_TO_PASS": [
+    "allows native scheme exactly",
+    "rejects different origin open-redirect",
+    "rejects exp:// scheme",
+    "allows origin with trailing slash normalized",
+    "rejects javascript: scheme"
+  ],
+  "PASS_TO_PASS": [
+    "allows configured web origin",
+    "rejects fragments",
+    "rejects protocol-relative"
   ]
 }

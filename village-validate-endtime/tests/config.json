@@ -17,5 +17,16 @@
   ],
   "selected_test_files_to_run": [
     "server/src/modules/events/events.create.test.ts"
+  ],
+  "FAIL_TO_PASS": [
+    "validateCreateEventInput rejects endTime before start",
+    "validateCreateEventInput rejects endTime equal to start",
+    "validateCreateEventInput accepts valid endTime after start",
+    "validateCreateEventInput accepts missing endTime"
+  ],
+  "PASS_TO_PASS": [
+    "validateCreateEventInput rejects invalid time format",
+    "validateCreateEventInput accepts well-formed input",
+    "validateCreateEventInput strips privileged fields"
   ]
 }

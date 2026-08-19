@@ -18,5 +18,17 @@
   ],
   "selected_test_files_to_run": [
     "server/src/modules/uploads/uploads.test.ts"
+  ],
+  "FAIL_TO_PASS": [
+    "detectMimeFromBuffer detects WebP RIFF WEBP",
+    "detectMimeFromBuffer detects JPEG",
+    "detectMimeFromBuffer detects PNG",
+    "processImageAndStripExif rotates and strips EXIF JPEG",
+    "processImageAndStripExif handles WebP"
+  ],
+  "PASS_TO_PASS": [
+    "detectMimeFromBuffer returns null for unknown",
+    "detectMimeFromBuffer detects GIF",
+    "processImageAndStripExif handles PNG"
   ]
 }

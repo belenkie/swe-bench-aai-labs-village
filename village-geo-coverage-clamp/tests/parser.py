@@ -76,37 +76,17 @@ def parse_test_output(stdout_content: str, stderr_content: str) -> List[TestResu
         results.append(TestResult(name=test_name, status=status))
 
     # --- Format 2: node:test with tsx --test (Village) ---
-    # Example:
-    # ▶ haversineMeters — known distances
-    #   ✔ SF to nearby ~100m (0.43ms)
-    #   ✔ identical coords = 0
-    # ✔ haversineMeters — known distances (0.85ms)
-    # ℹ tests 15 ... pass 15 etc.
-    # We parse indented ✔/✖ as individual tests, with current describe stack as parent.
     suite_stack: List[str] = []
-    # Track last top-level suite for constructing full names
     for line in combined_content.splitlines():
-        # Suite start: ▶ <name> or ⏺ <name> or similar unicode arrow
         m_suite_start = re.match(r"^\s*▶\s+(.+)$", line)
         if m_suite_start:
             suite_name = m_suite_start.group(1).strip()
             suite_stack.append(suite_name)
             continue
-        # Suite end with ✔ or ✖ at column 0 (no indent) – pop stack if matches
-        # Handles both passing and failing suites
         m_suite_end = re.match(r"^[✔✖]\s+(.+?)\s+\([\d\.]+ms\)\s*$", line)
         if m_suite_end and not line.startswith(" ") and not line.startswith("\t"):
-            suite_name_end = m_suite_end.group(1).strip()
-            # Pop if stack not empty and name matches last (or is substring)
             if suite_stack:
-                if (
-                    suite_stack[-1] in suite_name_end
-                    or suite_name_end in suite_stack[-1]
-                ):
-                    suite_stack.pop()
-                else:
-                    # Heuristic pop even if not exact match (suite finished)
-                    suite_stack.pop()
+                suite_stack.pop()
             continue
         # Test pass: indented ✔
         m_pass = re.match(r"^\s{2,}✔\s+(.+?)(?:\s+\([\d\.]+ms\))?\s*$", line)
@@ -115,11 +95,12 @@ def parse_test_output(stdout_content: str, stderr_content: str) -> List[TestResu
             full_name = (
                 " > ".join(suite_stack + [test_name]) if suite_stack else test_name
             )
-            # Use src/lib/clustering.test.ts as file prefix for uniqueness
-            # We'll produce ID like src/lib/clustering.test.ts::suite > test
+            # Emit both full name and short name to support configs using either
             results.append(TestResult(name=full_name, status=TestStatus.PASSED))
+            if full_name != test_name:
+                results.append(TestResult(name=test_name, status=TestStatus.PASSED))
             continue
-        # Test fail: indented ✖ or x or with failure
+        # Test fail: indented ✖
         m_fail = re.match(r"^\s{2,}[✖x]\s+(.+?)(?:\s+\([\d\.]+ms\))?\s*$", line)
         if m_fail:
             test_name = m_fail.group(1).strip()
@@ -127,8 +108,10 @@ def parse_test_output(stdout_content: str, stderr_content: str) -> List[TestResu
                 " > ".join(suite_stack + [test_name]) if suite_stack else test_name
             )
             results.append(TestResult(name=full_name, status=TestStatus.FAILED))
+            if full_name != test_name:
+                results.append(TestResult(name=test_name, status=TestStatus.FAILED))
             continue
-        # Alternative fail format from TAP: "not ok" etc.
+        # TAP format
         m_not_ok = re.match(r"^\s*not ok \d+\s+-\s+(.+)$", line)
         if m_not_ok:
             test_name = m_not_ok.group(1).strip()
@@ -136,6 +119,8 @@ def parse_test_output(stdout_content: str, stderr_content: str) -> List[TestResu
                 " > ".join(suite_stack + [test_name]) if suite_stack else test_name
             )
             results.append(TestResult(name=full_name, status=TestStatus.FAILED))
+            if full_name != test_name:
+                results.append(TestResult(name=test_name, status=TestStatus.FAILED))
             continue
         m_ok = re.match(r"^\s*ok \d+\s+-\s+(.+)$", line)
         if m_ok:
@@ -144,16 +129,16 @@ def parse_test_output(stdout_content: str, stderr_content: str) -> List[TestResu
                 " > ".join(suite_stack + [test_name]) if suite_stack else test_name
             )
             results.append(TestResult(name=full_name, status=TestStatus.PASSED))
+            if full_name != test_name:
+                results.append(TestResult(name=test_name, status=TestStatus.PASSED))
             continue
 
-    # --- Format 3: Village also supports run_script that outputs "PASSED/FAILED" lines manually ---
-    # Fallback: look for lines like "PASS: <name>" / "FAIL: <name>"
+    # --- Format 3: generic PASS/FAIL ---
     pattern_generic = r"(PASS|FAIL):\s*([^\n]+)"
     for match in re.finditer(pattern_generic, combined_content):
         status_str, test_name = match.groups()
         test_name = test_name.strip()
         status = TestStatus.PASSED if status_str == "PASS" else TestStatus.FAILED
-        # Avoid duplicates if already captured
         if not any(r.name == test_name for r in results):
             results.append(TestResult(name=test_name, status=status))
 

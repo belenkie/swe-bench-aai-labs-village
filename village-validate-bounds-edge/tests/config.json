@@ -1,6 +1,6 @@
 {
   "repo": "metainternal-aai/aai-labs-village",
-  "instance_id": "aai_metainternal-aai__aai-labs-village-c51d1268118d1d5673fb274d8b648fbcd1ce8678",
+  "instance_id": "aai_metainternal-aai__aai-labs-village-c51d1268118d1d5673fb274d8b648fbcd1ce8678-village-validate-bounds-edge",
   "base_commit": "c51d1268118d1d5673fb274d8b648fbcd1ce8678",
   "patch": "diff --git a/server/src/modules/events/events.routes.ts b/server/src/modules/events/events.routes.ts\nindex 80e5831..455d669 100644\n--- a/server/src/modules/events/events.routes.ts\n+++ b/server/src/modules/events/events.routes.ts\n@@ -31,12 +31,19 @@ function validateBounds(query: any): BoundsValidationResult {\n     if (raw === undefined || raw === null || raw === \"\") {\n       return { ok: false, message: `missing ${f}: query param ${f} is required` };\n     }\n+    // V-GEO-02 variant: reject array / empty-string-array edge (SWE-bench village-validate-bounds-edge)\n+    if (Array.isArray(raw)) {\n+      return { ok: false, message: `${f} must be a number: got ${JSON.stringify(raw)}` };\n+    }\n   }\n \n   // 2) non-numeric\n   const parsed: Record<string, number> = {};\n   for (const f of fields) {\n     const raw = query[f];\n+    if (Array.isArray(raw)) {\n+      return { ok: false, message: `${f} must be a number: got ${JSON.stringify(raw)}` };\n+    }\n     // parseFloat handles strings; we already checked missing\n     const num = typeof raw === \"number\" ? raw : parseFloat(String(raw));\n     if (!Number.isFinite(num)) {\n@@ -273,6 +280,10 @@ export function validateLimit(raw: unknown): LimitValidationResult {\n     if (!Number.isInteger(num)) {\n       return { ok: false, message: `limit must be an integer: got ${JSON.stringify(raw)}` };\n     }\n+    // V-GEO-02 variant: reject negative, zero, >100 (SWE-bench village-validate-bounds-edge)\n+    if (num < 1 || num > 100) {\n+      return { ok: false, message: `limit out of range: must be between 1 and 100, got ${num}` };\n+    }\n     return { ok: true, value: num };\n   }\n \n@@ -283,6 +294,10 @@ export function validateLimit(raw: unknown): LimitValidationResult {\n   if (!Number.isInteger(num)) {\n     return { ok: false, message: `limit must be an integer: got ${JSON.stringify(raw)}` };\n   }\n+  // V-GEO-02 variant: range guard\n+  if (num < 1 || num > 100) {\n+    return { ok: false, message: `limit out of range: must be between 1 and 100, got ${num}` };\n+  }\n   return { ok: true, value: num };\n }",
   "test_patch": "diff --git a/server/src/modules/events/events.bounds-edge.test.ts b/server/src/modules/events/events.bounds-edge.test.ts\nnew file mode 100644\nindex 0000000..c9d8e7f\n--- /dev/null\n+++ b/server/src/modules/events/events.bounds-edge.test.ts\n@@ -0,0 +1,55 @@\n+import { describe, it } from \"node:test\";\n+import assert from \"node:assert/strict\";\n+import { validateLimit } from \"./events.routes\";\n+\n+// validateBounds is internal, so we test via validateLimit and via direct import if exported\n+// For this task we focus on validateLimit edge cases + validateBounds array guard via route logic\n+\n+describe(\"validateBounds + validateLimit edge\", () => {\n+  it(\"validateLimit rejects negative limit\", () => {\n+    const res = validateLimit(-5);\n+    assert.equal(res.ok, false);\n+    assert.match((res as any).message, /between 1 and 100/);\n+  });\n+  it(\"validateLimit rejects 0\", () => {\n+    const res = validateLimit(0);\n+    assert.equal(res.ok, false);\n+  });\n+  it(\"validateLimit rejects 101\", () => {\n+    const res = validateLimit(101);\n+    assert.equal(res.ok, false);\n+  });\n+  it(\"validateLimit rejects array\", () => {\n+    const res = validateLimit([10, 20] as any);\n+    assert.equal(res.ok, false);\n+  });\n+  it(\"validateLimit rejects empty string\", () => {\n+    const res = validateLimit(\"\");\n+    assert.equal(res.ok, false);\n+  });\n+  it(\"validateLimit rejects non-integer 10.5\", () => {\n+    const res = validateLimit(\"10.5\");\n+    assert.equal(res.ok, false);\n+    assert.match((res as any).message, /integer/);\n+  });\n+  it(\"validateLimit accepts 50\", () => {\n+    const res = validateLimit(50);\n+    assert.equal(res.ok, true);\n+    assert.equal((res as any).value, 50);\n+  });\n+  it(\"validateLimit accepts 1 and 100 boundaries\", () => {\n+    assert.equal(validateLimit(1).ok, true);\n+    assert.equal(validateLimit(100).ok, true);\n+  });\n+});\n",
@@ -19,5 +19,17 @@
   "selected_test_files_to_run": [
     "server/src/modules/events/events.bounds-edge.test.ts"
   ],
-  "before_repo_set_cmd": ""
+  "before_repo_set_cmd": "",
+  "FAIL_TO_PASS": [
+    "validateLimit rejects negative limit",
+    "validateLimit rejects 0",
+    "validateLimit rejects 101",
+    "validateLimit rejects array",
+    "validateLimit rejects empty string",
+    "validateLimit rejects non-integer 10.5"
+  ],
+  "PASS_TO_PASS": [
+    "validateLimit accepts 50",
+    "validateLimit accepts 1 and 100 boundaries"
+  ]
 }

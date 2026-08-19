@@ -1,90 +1,33 @@
-# Village Fix: village-validate-create-full
+# village-validate-create-full
 
 ## Context
-Village is Expo SDK 57 + Fastify server app (map clustering, geospatial bounds, timezone DST, auth, uploads, RSVP).
+Village Expo SDK57+ Fastify — Village is a community event discovery app (SF Bay). Source at `/app` in container. Node 20, `npm ci --ignore-scripts`, `tsx@4.23.1` global. Tests via `npx tsx --test`.
 
-## Bug
-In the base commit `c51d1268`, the following behavior is broken / missing in cell **Validation / Input Guards**:
+Event creation validation in `server/src/modules/events/events.routes.ts`: `validateCreateEventInput`.
 
-village-validate-create-full
+## Bug description
+In base commit `c51d1268`, `validateCreateEventInput`:
 
-Affected files:
-- `server/src/modules/events/events.routes.ts`
+- Price validation only checked typeof string, but allowed non-numeric strings like "abc" or "12abc". Expected: price must be numeric string (allow "$", "," trimming) or literal "Free" case-insensitive. If contains letters other than Free, must reject with message containing "price".
+- Venue/address trimming: payload may contain location.venue with surrounding spaces "  Dolores Park  ". Existing code returned raw string without trim, so stored value had spaces. Expected: trim venue and address fields before returning in `value`.
+- Existing tests: create.test.ts expects well-formed input accepted, invalid time format rejected, privileged fields stripped.
 
-## Current buggy behavior (at base commit)
-The base commit does NOT correctly handle the case described. Tests that check the fixed behavior will FAIL at base.
+## Required fix outcome
+- In `validateCreateEventInput`:
+  - If price is non-empty string and lower !== "free", strip $ , and spaces, check if remaining contains [a-zA-Z] -> reject `price must be a numeric string or 'Free'`. Also if Number(cleaned) not finite -> reject same.
+  - For address, venue, description, ensure trimming: `typeof rawAddr === "string" && rawAddr.trim().length>0 ? rawAddr.trim() : undefined` similarly for venue, etc.
+  - Keep existing required checks: name, picture, categories, time, timezone, location latitude/longitude required.
+  - Preserve error message wording containing "price" for price failures.
 
-## Required fix (outcome only — do NOT state implementation)
-Fix the codebase so that:
+## Verifiable FAIL_TO_PASS
+- rejects non-numeric price "abc" -> ok:false /price/
+- trims venue "  Dolores Park  " -> value.venue == "Dolores Park"
+- rejects price with letters "12abc" -> ok:false
 
-- The behavior described in `village-validate-create-full` works correctly.
-- Existing relevant tests continue to pass (PASS_TO_PASS).
-- New tests that verify the fixed behavior pass (FAIL_TO_PASS).
+## PASS_TO_PASS
+- accepts numeric price "10" -> ok:true
+- accepts Free price "Free" case-insensitive -> ok:true
 
-Specific requirements:
-- Modify EXISTING code (3-8 files bounded).
-- Keep change minimal and self-contained, no unrelated refactors.
-- Handle edge cases: zero-area viewport, empty arrays, invalid inputs, DST gaps, antimeridian wrap as applicable to Validation / Input Guards.
-- Preserve exact validation error messages expected by tests (copy from existing validators).
-
-## Verifiable outcome
-- Before fix: at least one FAIL_TO_PASS test fails.
-- After fix: FAIL_TO_PASS tests flip to PASS, PASS_TO_PASS stays PASS.
-- Run `npx tsx --test <selected_test_files>` to verify locally.
-
-## Files to inspect
-Start by reading:
-- `src/lib/geo.ts` (boundsFromCenter, boundsArea, boundsCoverage)
-- `src/lib/clustering.ts` (haversineMeters, metersPerPixelFromViewport, clusterEvents)
-- `src/lib/timezone.ts` (getTimezoneOffsetMinutes, convertLocalWallToTimezone)
-- `server/src/modules/events/events.routes.ts` (validateBounds, validateLimit, validateCreateEventInput)
-- `server/src/modules/auth/state.ts`, `allowlist.ts`
-- `server/src/modules/uploads/uploads.routes.ts` (detectMimeFromBuffer)
-- `server/src/modules/events/events.repository.ts` (rsvpEvent, rowToEvent)
-
-Base commit: `c51d1268118d1d5673fb274d8b648fbcd1ce8678`
-Fix commit reference (for oracle generation only, not visible to agent at eval): `226f4b03d900f487466c386ab3b979f3c349bdd0`
-
-Patch excerpt (for understanding only):
-```diff
-diff --git a/server/src/modules/events/events.routes.ts b/server/src/modules/events/events.routes.ts
-index 80e5831..185376d 100644
---- a/server/src/modules/events/events.routes.ts
-+++ b/server/src/modules/events/events.routes.ts
-@@ -194,6 +194,21 @@ export function validateCreateEventInput(body: any): CreateValidationResult {
-   if (rawPrice !== undefined && rawPrice !== null && typeof rawPrice !== "string") {
-     return { ok: false, message: "price must be a string" };
-   }
-+  // V-VAL-02: price numeric guard — must be numeric or 'Free' (SWE-bench village-validate-create-full)
-+  if (typeof rawPrice === "string" && rawPrice.trim().length > 0) {
-+    const trimmed = rawPrice.trim();
-+    const lower = trimmed.toLowerCase();
-+    if (lower !== "free") {
-+      const cleaned = trimmed.replace(/[$,\s]/g, "");
-+      if (/[a-zA-Z]/.test(cleaned)) {
-+        return { ok: false, message: "price must be a numeric string or 'Free'" };
-+      }
-+      const num = Number(cleaned);
-+      if (!Number.isFinite(num)) {
-+        return { ok: false, message: "price must be a numeric string or 'Free'" };
-+      }
-+    }
-+  }
-   if (rawAddr !== undefined && rawAddr !== null && typeof rawAddr !== "string") {
-     return { ok: false, message: "address must be a string" };
-   }
-@@ -215,10 +230,10 @@ export function validateCreateEventInput(body: any): CreateValidationResult {
-     timezone: rawTz,
-     latitude: rawLat,
-     longitude: rawLng,
--    address: typeof rawAddr === "string" && rawAddr.trim().length > 0 ? rawAddr : undefined,
--    venue: typeof rawVenue === "string" && rawVenue.trim().length > 0 ? rawVenue : undefined,
--    description: typeof rawDescription === "string" ? rawDescription : undefined,
--    price: typeof rawPrice === "string" ? rawPrice : undefined,
-+    address: typeof rawAddr === "string" && rawAddr.trim().length > 0 ? rawAddr.trim() : undefined,
-+    venue: typeof rawVenue === "string" && rawVenue.trim().length > 0 ? rawVenue.trim() : undefined,
-+    descri
-```
-
-## Deliverable
-Modify files in repo to fix bug. Do NOT edit test files — they are hidden verifier.
+## Files
+- server/src/modules/events/events.routes.ts
+- server/src/modules/events/events.create-full.test.ts

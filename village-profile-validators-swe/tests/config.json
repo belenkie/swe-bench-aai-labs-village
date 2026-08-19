@@ -18,5 +18,17 @@
   ],
   "selected_test_files_to_run": [
     "server/src/modules/users/users.validators.test.ts"
+  ],
+  "FAIL_TO_PASS": [
+    "display_name rejects email",
+    "display_name rejects <> XSS",
+    "bio rejects too long 160",
+    "avatar_url must be https and max 2048",
+    "display_name too short rejected"
+  ],
+  "PASS_TO_PASS": [
+    "display_name trims and accepts valid",
+    "bio trims empty to undefined",
+    "avatar_url accepts valid https"
   ]
 }

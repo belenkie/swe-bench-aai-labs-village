@@ -2,7 +2,7 @@ schema_version = "1.1"
 
 [task]
 name = "codimango/village-timezone-invalid"
-description = "Village AAI Labs - village-timezone-invalid"
+description = "Village AAI Labs - getTimezoneOffsetMinutes invalid timezone validation"
 authors = [{ name = "Eran Belenki", email = "ebelenki@meta.com" }]
 keywords = ["geospatial", "validation", "village", "aai-labs"]
 format = "swe_bench_single_turn"

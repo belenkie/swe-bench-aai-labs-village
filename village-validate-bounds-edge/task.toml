@@ -2,7 +2,7 @@ schema_version = "1.1"
 
 [task]
 name = "codimango/village-validate-bounds-edge"
-description = "Village AAI Labs - village-validate-bounds-edge"
+description = "Village AAI Labs - validateBounds array guard and validateLimit range 1..100"
 authors = [{ name = "Eran Belenki", email = "ebelenki@meta.com" }]
 keywords = ["geospatial", "validation", "village", "aai-labs"]
 format = "swe_bench_single_turn"

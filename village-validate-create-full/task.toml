@@ -2,7 +2,7 @@ schema_version = "1.1"
 
 [task]
 name = "codimango/village-validate-create-full"
-description = "Village AAI Labs - village-validate-create-full"
+description = "Village AAI Labs - validateCreateEventInput price numeric and trim venue"
 authors = [{ name = "Eran Belenki", email = "ebelenki@meta.com" }]
 keywords = ["geospatial", "validation", "village", "aai-labs"]
 format = "swe_bench_single_turn"

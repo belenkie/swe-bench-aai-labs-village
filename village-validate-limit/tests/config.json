@@ -18,5 +18,17 @@
   ],
   "selected_test_files_to_run": [
     "server/src/modules/events/events.limit.test.ts"
+  ],
+  "FAIL_TO_PASS": [
+    "validateLimit rejects limit 0",
+    "validateLimit rejects limit 101",
+    "validateLimit rejects non-integer 10.5",
+    "validateLimit rejects empty string",
+    "validateLimit rejects array"
+  ],
+  "PASS_TO_PASS": [
+    "validateLimit accepts 50",
+    "validateLimit defaults to 50 when undefined",
+    "validateLimit accepts 1 and 100 boundaries"
   ]
 }

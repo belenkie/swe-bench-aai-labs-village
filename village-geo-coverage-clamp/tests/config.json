@@ -17,5 +17,16 @@
   ],
   "selected_test_files_to_run": [
     "src/lib/geo.test.ts"
+  ],
+  "FAIL_TO_PASS": [
+    "boundsCoverage clamps to 1 when areas exceed viewport super-cover",
+    "boundsCoverage clamps to 0 when viewport zero area",
+    "boundsCoverage returns 0..1 for partial overlap",
+    "boundsCoverage exact 1 when fully covered"
+  ],
+  "PASS_TO_PASS": [
+    "boundsArea positive",
+    "boundsCoverage returns fraction covered",
+    "boundsFromCenter clamps latitude"
   ]
 }

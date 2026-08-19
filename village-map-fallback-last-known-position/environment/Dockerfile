@@ -2,7 +2,7 @@
 FROM public.ecr.aws/docker/library/node:20-slim
 
 # >>> codimango swebench-private repo snapshot >>>
-COPY environment/village.git.tar.gz /tmp/village.git.tar.gz
+COPY village.git.tar.gz /tmp/village.git.tar.gz
 RUN mkdir -p /opt/repo-snapshot \
     && tar -xzf /tmp/village.git.tar.gz -C /opt/repo-snapshot \
     && rm -f /tmp/village.git.tar.gz

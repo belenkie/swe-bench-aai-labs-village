@@ -17,5 +17,16 @@
   ],
   "selected_test_files_to_run": [
     "src/lib/timezone.test.ts"
+  ],
+  "FAIL_TO_PASS": [
+    "convertLocalWallToTimezone handles DST gap forward fallback",
+    "convertLocalWallToTimezone normal time still works",
+    "convertLocalWallToTimezone DST fall-back ambiguous still returns valid",
+    "getTimezoneOffsetMinutes works for UTC"
+  ],
+  "PASS_TO_PASS": [
+    "convertLocalWallToTimezone iterative solve converges",
+    "formatInTimeZone returns string",
+    "formatEventDateTime returns string"
   ]
 }

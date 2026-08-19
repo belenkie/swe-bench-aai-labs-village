@@ -1,75 +1,30 @@
-# Village Fix: village-timezone-invalid
+# village-timezone-invalid
 
 ## Context
-Village is Expo SDK 57 + Fastify server app (map clustering, geospatial bounds, timezone DST, auth, uploads, RSVP).
+Village Expo SDK57+ Fastify — Village is a community event discovery app (SF Bay). Source at `/app` in container. Node 20, `npm ci --ignore-scripts`, `tsx@4.23.1` global. Tests via `npx tsx --test`.
 
-## Bug
-In the base commit `c51d1268`, the following behavior is broken / missing in cell **Timezone / DST**:
+Timezone helper `src/lib/timezone.ts` provides `getTimezoneOffsetMinutes(timeZone, date)` which uses Intl.DateTimeFormat to compute offset.
 
-village-timezone-invalid
+## Bug description
+In base commit `c51d1268`, `getTimezoneOffsetMinutes` does NOT validate its `timeZone` argument:
 
-Affected files:
-- `src/lib/timezone.ts`
+- Passing invalid IANA zone like "Invalid/Zone" or empty string "" causes Intl to throw RangeError somewhere deep, but function does not have explicit guard and may return incorrect offset or throw uncontrolled error message.
+- Expected: function should explicitly validate `timeZone` is non-empty string and valid IANA timezone via `new Intl.DateTimeFormat('en-US', { timeZone })` attempt, and if invalid, throw Error with message containing "Invalid timezone: <input>".
 
-## Current buggy behavior (at base commit)
-The base commit does NOT correctly handle the case described. Tests that check the fixed behavior will FAIL at base.
+- Valid zones like "UTC" and "America/Los_Angeles" must still work and return finite numbers (UTC -> 0).
 
-## Required fix (outcome only — do NOT state implementation)
-Fix the codebase so that:
+## Required fix outcome
+- In `src/lib/timezone.ts`, at top of `getTimezoneOffsetMinutes`:
+  - If typeof timeZone != 'string' or trimmed length==0, throw `new Error('Invalid timezone: <value>')`
+  - Try `new Intl.DateTimeFormat('en-US', { timeZone })` to validate, catch and throw same "Invalid timezone: <zone>" error.
+  - Keep existing offset calculation logic unchanged.
 
-- The behavior described in `village-timezone-invalid` works correctly.
-- Existing relevant tests continue to pass (PASS_TO_PASS).
-- New tests that verify the fixed behavior pass (FAIL_TO_PASS).
+## Verifiable
+- getTimezoneOffsetMinutes throws on invalid timezone (contains "Invalid timezone")
+- throws on empty string
+- accepts valid UTC (returns 0)
+- accepts America/Los_Angeles (returns finite number)
 
-Specific requirements:
-- Modify EXISTING code (3-8 files bounded).
-- Keep change minimal and self-contained, no unrelated refactors.
-- Handle edge cases: zero-area viewport, empty arrays, invalid inputs, DST gaps, antimeridian wrap as applicable to Timezone / DST.
-- Preserve exact validation error messages expected by tests (copy from existing validators).
-
-## Verifiable outcome
-- Before fix: at least one FAIL_TO_PASS test fails.
-- After fix: FAIL_TO_PASS tests flip to PASS, PASS_TO_PASS stays PASS.
-- Run `npx tsx --test <selected_test_files>` to verify locally.
-
-## Files to inspect
-Start by reading:
-- `src/lib/geo.ts` (boundsFromCenter, boundsArea, boundsCoverage)
-- `src/lib/clustering.ts` (haversineMeters, metersPerPixelFromViewport, clusterEvents)
-- `src/lib/timezone.ts` (getTimezoneOffsetMinutes, convertLocalWallToTimezone)
-- `server/src/modules/events/events.routes.ts` (validateBounds, validateLimit, validateCreateEventInput)
-- `server/src/modules/auth/state.ts`, `allowlist.ts`
-- `server/src/modules/uploads/uploads.routes.ts` (detectMimeFromBuffer)
-- `server/src/modules/events/events.repository.ts` (rsvpEvent, rowToEvent)
-
-Base commit: `c51d1268118d1d5673fb274d8b648fbcd1ce8678`
-Fix commit reference (for oracle generation only, not visible to agent at eval): `7aef8078db90cf9c5bbdc707180ad5139b38fd48`
-
-Patch excerpt (for understanding only):
-```diff
-diff --git a/src/lib/timezone.ts b/src/lib/timezone.ts
-index bbd561f..f4fb15c 100644
---- a/src/lib/timezone.ts
-+++ b/src/lib/timezone.ts
-@@ -14,6 +14,17 @@
-  */
- 
- export function getTimezoneOffsetMinutes(timeZone: string, date: Date): number {
-+  // V-TZ-02: explicit invalid timezone guard — throw controlled error for SWE-bench village-timezone-invalid
-+  if (typeof timeZone !== 'string' || timeZone.trim().length === 0) {
-+    throw new Error(`Invalid timezone: ${String(timeZone)}`);
-+  }
-+  try {
-+    // Validate IANA timezone via Intl — throws RangeError for invalid zones
-+    new Intl.DateTimeFormat('en-US', { timeZone });
-+  } catch {
-+    throw new Error(`Invalid timezone: ${timeZone}`);
-+  }
-+
-   // Format date in timeZone and UTC, build UTC dates from parts, diff gives offset
-   const formatter = new Intl.DateTimeFormat('en-US', {
-     timeZone,
-```
-
-## Deliverable
-Modify files in repo to fix bug. Do NOT edit test files — they are hidden verifier.
+## Files
+- src/lib/timezone.ts
+- src/lib/timezone.invalid.test.ts
