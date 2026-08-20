@@ -1,0 +1,26 @@
+diff --git a/server/src/modules/events/events.routes.ts b/server/src/modules/events/events.routes.ts
+index 80e5831..ddceeae 100644
+--- a/server/src/modules/events/events.routes.ts
++++ b/server/src/modules/events/events.routes.ts
+@@ -146,6 +146,12 @@ export function validateCreateEventInput(body: any): CreateValidationResult {
+   }
+   if (typeof rawTz !== "string" || rawTz.trim().length === 0) {
+     return { ok: false, message: "timezone must be a non-empty string" };
++  }
++  const trimmedTz = rawTz.trim();
++  try {
++    Intl.DateTimeFormat(undefined, { timeZone: trimmedTz });
++  } catch {
++    return { ok: false, message: `Invalid timezone: ${trimmedTz} is not a recognized IANA zone` };
+   }
+ 
+   // location — support both nested location and flat lat/lng (flat for backward compat)
+@@ -212,7 +218,7 @@ export function validateCreateEventInput(body: any): CreateValidationResult {
+     categories,
+     time: rawTime,
+     endTime: typeof rawEndTime === "string" && rawEndTime.trim().length > 0 ? rawEndTime : undefined,
+-    timezone: rawTz,
++    timezone: trimmedTz,
+     latitude: rawLat,
+     longitude: rawLng,
+     address: typeof rawAddr === "string" && rawAddr.trim().length > 0 ? rawAddr : undefined,

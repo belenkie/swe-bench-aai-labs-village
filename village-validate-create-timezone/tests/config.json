@@ -1,0 +1,40 @@
+{
+  "repo": "metainternal-aai/aai-labs-village",
+  "instance_id": "aai_metainternal-aai__aai-labs-village-c51d1268118d1d5673fb274d8b648fbcd1ce8678-village-validate-create-timezone",
+  "base_commit": "c51d1268118d1d5673fb274d8b648fbcd1ce8678",
+  "patch": "diff --git a/server/src/modules/events/events.routes.ts b/server/src/modules/events/events.routes.ts\nindex 80e5831..ddceeae 100644\n--- a/server/src/modules/events/events.routes.ts\n+++ b/server/src/modules/events/events.routes.ts\n@@ -146,6 +146,12 @@ export function validateCreateEventInput(body: any): CreateValidationResult {\n   }\n   if (typeof rawTz !== \"string\" || rawTz.trim().length === 0) {\n     return { ok: false, message: \"timezone must be a non-empty string\" };\n+  }\n+  const trimmedTz = rawTz.trim();\n+  try {\n+    Intl.DateTimeFormat(undefined, { timeZone: trimmedTz });\n+  } catch {\n+    return { ok: false, message: `Invalid timezone: ${trimmedTz} is not a recognized IANA zone` };\n   }\n \n   // location \u2014 support both nested location and flat lat/lng (flat for backward compat)\n@@ -212,7 +218,7 @@ export function validateCreateEventInput(body: any): CreateValidationResult {\n     categories,\n     time: rawTime,\n     endTime: typeof rawEndTime === \"string\" && rawEndTime.trim().length > 0 ? rawEndTime : undefined,\n-    timezone: rawTz,\n+    timezone: trimmedTz,\n     latitude: rawLat,\n     longitude: rawLng,\n     address: typeof rawAddr === \"string\" && rawAddr.trim().length > 0 ? rawAddr : undefined,\n",
+  "test_patch": "diff --git a/server/src/modules/events/events.create-timezone.test.ts b/server/src/modules/events/events.create-timezone.test.ts\nnew file mode 100644\nindex 0000000..aaaaaaa\n--- /dev/null\n+++ b/server/src/modules/events/events.create-timezone.test.ts\n@@ -0,0 +1,72 @@\n+import { describe, it } from \"node:test\";\n+import assert from \"node:assert/strict\";\n+import { validateCreateEventInput } from \"./events.routes\";\n+\n+const BASE = {\n+  name: \"Test Event\",\n+  picture: \"https://example.com/p.jpg\",\n+  categories: [\"music\"],\n+  time: \"2026-09-01T18:00:00Z\",\n+  timezone: \"America/Los_Angeles\",\n+  location: { latitude: 37.76, longitude: -122.43 },\n+};\n+\n+describe(\"validateCreateEventInput timezone IANA validation\", () => {\n+  it(\"validateCreateEventInput rejects invalid timezone Invalid/Zone\", () => {\n+    const res = validateCreateEventInput({ ...BASE, timezone: \"Invalid/Zone\" });\n+    assert.equal(res.ok, false);\n+    assert.match((res as any).message, /Invalid timezone/);\n+  });\n+  it(\"validateCreateEventInput rejects invalid timezone Foo/Bar\", () => {\n+    const res = validateCreateEventInput({ ...BASE, timezone: \"Foo/Bar\" });\n+    assert.equal(res.ok, false);\n+    assert.match((res as any).message, /Invalid timezone/);\n+  });\n+  it(\"validateCreateEventInput rejects invalid timezone Not/A_Real_Zone\", () => {\n+    const res = validateCreateEventInput({ ...BASE, timezone: \"Not/A_Real_Zone\" });\n+    assert.equal(res.ok, false);\n+  });\n+  it(\"validateCreateEventInput accepts valid timezone UTC\", () => {\n+    const res = validateCreateEventInput({ ...BASE, timezone: \"UTC\" });\n+    assert.equal(res.ok, true);\n+  });\n+  it(\"validateCreateEventInput accepts valid timezone America/Los_Angeles\", () => {\n+    const res = validateCreateEventInput({ ...BASE, timezone: \"America/Los_Angeles\" });\n+    assert.equal(res.ok, true);\n+  });\n+  it(\"validateCreateEventInput trims timezone with surrounding spaces\", () => {\n+    const res = validateCreateEventInput({ ...BASE, timezone: \"  America/Los_Angeles  \" });\n+    assert.equal(res.ok, true);\n+    if (res.ok) {\n+      assert.equal(res.value.timezone, \"America/Los_Angeles\");\n+    }\n+  });\n+  it(\"validateCreateEventInput rejects invalid time format\", () => {\n+    const res = validateCreateEventInput({ ...BASE, time: \"not-a-date\" });\n+    assert.equal(res.ok, false);\n+  });\n+  it(\"validateCreateEventInput accepts well-formed input\", () => {\n+    const res = validateCreateEventInput({ ...BASE });\n+    assert.equal(res.ok, true);\n+  });\n+  it(\"validateCreateEventInput strips privileged fields\", () => {\n+    const evil: any = { ...BASE, id: \"evil\", attendees: 9999, isFeatured: true };\n+    const res = validateCreateEventInput(evil);\n+    assert.equal(res.ok, true);\n+    if (res.ok) {\n+      const v = res.value as any;\n+      assert.equal(v.id, undefined);\n+      assert.equal(v.attendees, undefined);\n+      assert.equal(v.isFeatured, undefined);\n+    }\n+  });\n+  it(\"validateCreateEventInput rejects missing timezone\", () => {\n+    const { timezone, ...rest } = BASE as any;\n+    const res = validateCreateEventInput(rest);\n+    assert.equal(res.ok, false);\n+  });\n+  it(\"validateCreateEventInput rejects empty timezone\", () => {\n+    const res = validateCreateEventInput({ ...BASE, timezone: \"\" });\n+    assert.equal(res.ok, false);\n+  });\n+});\n",
+  "fail_to_pass": [
+    "validateCreateEventInput rejects invalid timezone Invalid/Zone",
+    "validateCreateEventInput rejects invalid timezone Foo/Bar",
+    "validateCreateEventInput rejects invalid timezone Not/A_Real_Zone",
+    "validateCreateEventInput trims timezone with surrounding spaces"
+  ],
+  "pass_to_pass": [
+    "validateCreateEventInput accepts valid timezone UTC",
+    "validateCreateEventInput accepts valid timezone America/Los_Angeles",
+    "validateCreateEventInput rejects invalid time format",
+    "validateCreateEventInput accepts well-formed input",
+    "validateCreateEventInput strips privileged fields",
+    "validateCreateEventInput rejects missing timezone",
+    "validateCreateEventInput rejects empty timezone"
+  ],
+  "selected_test_files_to_run": [
+    "server/src/modules/events/events.create-timezone.test.ts"
+  ],
+  "FAIL_TO_PASS": [
+    "validateCreateEventInput rejects invalid timezone Invalid/Zone",
+    "validateCreateEventInput rejects invalid timezone Foo/Bar",
+    "validateCreateEventInput rejects invalid timezone Not/A_Real_Zone",
+    "validateCreateEventInput trims timezone with surrounding spaces"
+  ],
+  "PASS_TO_PASS": [
+    "validateCreateEventInput accepts valid timezone UTC",
+    "validateCreateEventInput accepts valid timezone America/Los_Angeles",
+    "validateCreateEventInput rejects invalid time format",
+    "validateCreateEventInput accepts well-formed input",
+    "validateCreateEventInput strips privileged fields",
+    "validateCreateEventInput rejects missing timezone",
+    "validateCreateEventInput rejects empty timezone"
+  ]
+}
